@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Units.Bourbon;
 using UnityEngine;
 
 public class BourbonInWater : MonoBehaviour
@@ -8,22 +9,31 @@ public class BourbonInWater : MonoBehaviour
     [SerializeField] float speedDive = 2;
     float oldDens;
     BuoyancyEffector2D buo;
-    
+    BourbonController controller;
+
+    private void Awake()
+    {
+        controller = GetComponent<BourbonController>();
+    }
     private void Start()
     {
         water = GameObject.FindGameObjectWithTag("Water");
-        buo = water.GetComponent<BuoyancyEffector2D>();
-        oldDens = buo.density;
+        if (water != null)
+        {
+            buo = water.GetComponent<BuoyancyEffector2D>();
+            oldDens = buo.density;
+        }
+            
     }
     // Update is called once per frame
     void Update()
     {
-         if (BourbonUnitBase.inWater) MovementInWater();
+         if (controller.condition == CharacterConditions.Water) MovementInWater();
     }
     void MovementInWater()
     {
 
-        if (BourbonUnitBase._canMove)
+        if (controller._canMove)
         {
             if (Input.GetKey(KeyCode.S))
             {

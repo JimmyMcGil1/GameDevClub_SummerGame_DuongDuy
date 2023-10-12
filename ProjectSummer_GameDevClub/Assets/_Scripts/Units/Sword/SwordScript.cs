@@ -8,7 +8,7 @@ public class SwordScript : SwordBaseUnit
     public static SwordScript _instance { get; private set; }
     GameObject bourbon;
 
-    [Header ("Return To Master")]
+    [Header("Return To Master")]
     [SerializeField] LayerMask tilemapLayer;
     [SerializeField] LayerMask bourbonLayer;
     [SerializeField] float distanceCast;
@@ -16,20 +16,22 @@ public class SwordScript : SwordBaseUnit
     [SerializeField] float amplitude;
     float y0;
     private Vector3 tempPos;
-    
+
     bool isFloating;
     BoxCollider2D plankCollider;
+    CircleCollider2D bumbleCol;
     CircleCollider2D circleCol;
     Animator anim;
     public enum swordForm
     {
         normal,
-        plank
+        plank,
+        bumble,
     }
     public swordForm currentForm { get; private set; }
     private void Awake()
     {
-       
+
         circleCol = GetComponent<CircleCollider2D>();
         anim = GetComponentInChildren<Animator>();
         bourbon = GameObject.FindGameObjectWithTag("Bourbon");
@@ -38,21 +40,23 @@ public class SwordScript : SwordBaseUnit
         isFloating = false;
         plankCollider = gameObject.transform.Find("swordGFX").Find("PlankCollider").gameObject.GetComponent<BoxCollider2D>();
         plankCollider.enabled = false;
+        bumbleCol = gameObject.transform.Find("swordGFX").Find("BumbleCollider").gameObject.GetComponent<CircleCollider2D>();
+        bumbleCol.enabled = false;
         gameObject.GetComponent<AIPath>().canMove = false;
-    }   
+    }
 
     private void Update()
     {
     }
     private void FixedUpdate()
     {
-        
+
         if (isFloating)
         {
             SeftFloating();
         }
     }
-   
+
     public void ReturnToBourbon()
     {
         GetComponent<AIPath>().canMove = true;
@@ -60,7 +64,7 @@ public class SwordScript : SwordBaseUnit
             Transform(transform.position, swordForm.normal);
 
     }
-    
+
     void SeftFloating()
     {
         tempPos.y = y0 + amplitude * Mathf.Sin(floatSpeed * Time.time);
@@ -73,7 +77,7 @@ public class SwordScript : SwordBaseUnit
         FormSelect(_form);
 
     }
-    void FormSelect(swordForm  _form)
+    void FormSelect(swordForm _form)
     {
         currentForm = _form;
         switch (_form)
@@ -86,10 +90,24 @@ public class SwordScript : SwordBaseUnit
                 anim.SetFloat("form", 1);
                 IntoPlankForm();
                 break;
+            case swordForm.bumble:
+                anim.SetFloat("form", 2);
+                IntoBumbleForm();
+                break;
             default:
                 break;
         }
     }
+
+    void IntoBumbleForm()
+    {
+        GetComponent<AIPath>().enableRotation = false;
+        GetComponent<AIPath>().canMove = false;
+      //  isFloating = true;
+        bumbleCol.enabled = true;
+        circleCol.enabled = false;
+    }
+
     void IntoPlankForm()
     {
         GetComponent<AIPath>().enableRotation = false;
@@ -111,5 +129,5 @@ public class SwordScript : SwordBaseUnit
         transform.localRotation = quar;
         circleCol.enabled = true;
     }
-   
+
 }

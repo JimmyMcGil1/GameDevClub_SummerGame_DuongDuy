@@ -24,22 +24,16 @@ AnimationClip:
     - time: 0.083333336
       value: {fileID: 1147956910, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - time: 0.16666667
-      value: {fileID: -216432111, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.25
       value: {fileID: 512235481, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.33333334
+    - time: 0.25
       value: {fileID: 574008580, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.41666666
-      value: {fileID: 336498122, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.5
-      value: {fileID: -1418044706, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.5833333
+    - time: 0.33333334
       value: {fileID: -1309366015, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.6666667
+    - time: 0.41666666
       value: {fileID: 1139524567, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.75
-      value: {fileID: -1112923358, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - time: 0.8333333
+    - time: 0.5
+      value: {fileID: 996026676, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
+    - time: 0.5833333
       value: {fileID: 996026676, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     attribute: m_Sprite
     path: 
@@ -62,21 +56,18 @@ AnimationClip:
     pptrCurveMapping:
     - {fileID: 208867940, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - {fileID: 1147956910, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - {fileID: -216432111, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - {fileID: 512235481, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - {fileID: 574008580, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - {fileID: 336498122, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - {fileID: -1418044706, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - {fileID: -1309366015, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - {fileID: 1139524567, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
-    - {fileID: -1112923358, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
+    - {fileID: 996026676, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
     - {fileID: 996026676, guid: be81b6156dfb2a64d856eaf4705917cf, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.9166666
+    m_StopTime: 0.6666666
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -96,7 +87,7 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.8333333
+  - time: 0.5833333
     functionName: FalledRock
     data: 
     objectReferenceParameter: {fileID: 0}

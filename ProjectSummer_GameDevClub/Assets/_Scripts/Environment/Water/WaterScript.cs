@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
-
+using Units.Bourbon;
 public class WaterScript : MonoBehaviour
 {
 
@@ -198,7 +198,7 @@ public class WaterScript : MonoBehaviour
         if (collision.gameObject.CompareTag("Bourbon"))
         {
             StartCoroutine(StartBlur());
-            collision.gameObject.GetComponent<BourbonMoveset>().IntoWater();
+            collision.gameObject.GetComponent<BourbonController>().IntoWater();
         }
        
     }
@@ -207,7 +207,7 @@ public class WaterScript : MonoBehaviour
         if (collision.gameObject.CompareTag("Bourbon"))
         {
             StartCoroutine(StarClear());
-            collision.gameObject.GetComponent<BourbonMoveset>().OutWater();
+            collision.gameObject.GetComponent<BourbonController>().OutWater();
         }
     }
     private void OnTriggerStay2D(Collider2D collision)

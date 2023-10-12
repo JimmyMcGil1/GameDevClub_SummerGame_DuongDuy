@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Units.Bourbon;
 public class MagicSphereScript : MonoBehaviour
 {
     public int damage;
@@ -14,7 +14,7 @@ public class MagicSphereScript : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bourbon"))
         {
-            collision.gameObject.GetComponent<BourbonMoveset>().TakeDamage(-damage);
+            collision.gameObject.GetComponent<BourbonController>().TakeDamage(-damage);
         }
     }
 }

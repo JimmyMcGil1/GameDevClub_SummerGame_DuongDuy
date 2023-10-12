@@ -9,7 +9,5 @@ using UnityEngine;
 public class UnitBase : MonoBehaviour {
     public Stats _Stats { get; protected set; }
   
-    public virtual void TakeDamage(int dmg) {
-      
-    }
+
 }

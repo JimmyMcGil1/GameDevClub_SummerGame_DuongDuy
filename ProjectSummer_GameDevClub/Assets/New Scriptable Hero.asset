@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Faction: 0
   _stats:
-    Health: 200
-    AttackPower: 30
+    Health: 0
+    AttackPower: 10
   Prefab: {fileID: 0}
   Description: 
   MenuSprite: {fileID: 0}
   HeroType: 0
   initStats:
     Health: 200
-    AttackPower: 30
+    AttackPower: 10

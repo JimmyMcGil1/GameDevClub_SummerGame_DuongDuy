@@ -1,313 +1,358 @@
+using JetBrains.Annotations;
 using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System;
 using Unity.VisualScripting;
-
-public class BourbonMoveset : BourbonUnitBase
+using UnityEngine;
+using Spine.Unity;
+namespace Units.Bourbon
 {
-    public float hor;
-    float oldFace;
-    [SerializeField] float speed;
-    [SerializeField] float JumpForce;
-   
-    [SerializeField] LayerMask tilemapLayer;
-    [SerializeField] LayerMask ropeBoundLayer;
-   
-    bool isDashing;
-    [SerializeField] float dashingTime;
-    [SerializeField] float dashingDis;
-    [SerializeField] float fadeTime;
-    [SerializeField] float dashTimmer = 0.5f;
-     float dashCounter;
-
-    [SerializeField] float dustTimmer = 0.01f;
-
-    [SerializeField] Stats initStats;
-
-
-    public float pushForce = 10;
-    public bool attached = false;
-    public Transform attachedTo;
-    private GameObject disregard;
-
-    float initGravity;
-
-    [SerializeField] AudioClip jumpSound;
-    [SerializeField] AudioClip landingSound;
-    float timeCounter = 0;
-    float dirAutoMove = 1;
-
-    protected  void Awake()
+    public class BourbonMoveset : MonoBehaviour
     {
-        anim = GetComponent<Animator>();
-        box = GetComponent<BoxCollider2D>();
-        rigit = GetComponent<Rigidbody2D>();
-        isDead = false; 
-        _canMove = true;
-        _bringSword = 0;
-        _runLeft = 0; 
-        bourbonEffect = transform.Find("Effect").gameObject.GetComponent<BourbonEffectScript>();
-        canJump = true;
-        SetStats(scriptableHero);
-        dashCounter = Mathf.Infinity;
-        BourbonUI.instance.HealTxtChange(currStats.Health);
-    }
-   
-    private void Update()
-    {
+
+        [Header ("Spine animation")]
+        [SpineAnimation]
+        public string idleAnimationName;
+        [SpineAnimation]
+        public string runAnimationName;
+        [SpineAnimation]
+        public string jumpAnimationName;
+        [SpineAnimation]
+        public string hangAnimationName;
+        [SpineAnimation]
+        public string dashAnimationName;
+        [SpineAnimation]
+        string attackAnimationName;
         
-        hor = Input.GetAxisRaw("Horizontal");
-        anim.SetBool("walk", (hor != 0 && _canMove && !inWater ) || (timeCounter > 0));
-        anim.SetFloat("faceRight", oldFace);
-        if (_canMove && !isDead)
-        {
-            if (anim.GetFloat("faceRight") < 0)
-            {
-                Vector2 faceDir = transform.localScale;
-                faceDir.x = -1;
-                transform.localScale = faceDir;
-            }
-            else
-            {
-                Vector2 faceDir = transform.localScale;
-                faceDir.x = 1;
-                transform.localScale = faceDir;
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.Space) && !isDead)
-        {
-            if ((_canMove && canJump) || inWater || isStillAttachRope())
-            {
-                NormalJump();
-            }
-        }
+        public SkeletonAnimation sktAnim;
+        [SerializeField] InputManagement inputManager;
+        
+        [Header ("Movement")]
+        [SerializeField] float  initSpeed;
+        float currentSpeed;
+        
+        [Header("Jump")]
+        [SerializeField] float jumpForce;
+        [SerializeField] int maxConsecutiveJump = 1;
+        [SerializeField] float gravityFallScale = 3f;
+        public int jumpCounter;
+        bool jumping = false;
+        float jumpDuration = 0.1f;
+        [SerializeField] AudioClip jumpSound;
+        [SerializeField] Vector2 wallJumpForce;
+        float wallJumpDirection = 1f;
        
+        [Header ("Dash")]
+        bool isDashing;
+        [SerializeField] float dashingTime;
+        [SerializeField] float dashingDis;
+        [SerializeField] float fadeTime;
+        [SerializeField] float dashTimmer = 0.5f;
+        float dashCounter;
 
-        /////////Tesing 
-        if (Input.GetKeyDown(KeyCode.K))
+        float oldGravity = 0;
+
+        [SerializeField] Stats initStats;
+        public float pushForce = 10;
+        public bool attached = false;
+        public Transform attachedTo;
+        public float timeCounter = 0;
+        float dirAutoMove = 1;
+        BourbonController controller;
+        BourbonEffectScript bourbonEffect;
+        public Animator anim;
+        CapsuleCollider2D capCol;
+        public Rigidbody2D rigit;
+
+        //test scriableobject tile
+        [SerializeField] MapManager mapManager;
+
+        public Vector2 faceDir = Vector2.right; // nhan vat xuat hien quay mat qua phai 
+        #region Get Input state from Input manager
+        public float horizotal { get { if (inputManager != null) { return inputManager.horizontalMovement; } else return 0; } private set { } }
+        public bool jumpInput
         {
-            TakeDamage(-50);
+            get
+            {
+                if (inputManager != null)
+                {
+                    return inputManager.jumpStarted;
+                }
+                else return false;
+            }
         }
-        if (Input.GetKeyDown(KeyCode.E) && !isDead)
+        public bool jumpHeld
         {
+            get
+            {
+                if (inputManager != null)
+                {
+                    return inputManager.jumpHeld;
+                }
+                else return false;
+            }
+        }
+        public bool dashInput
+        {
+            get
+            {
+                if (inputManager != null)
+                {
+                    return inputManager.dashStart;
+                }
+                else return false;
+            }
+        }
+        #endregion
+        protected void Awake()
+        {
+            anim = GetComponent<Animator>();
+            sktAnim = GetComponent<SkeletonAnimation>();
+            rigit = GetComponent<Rigidbody2D>();
+            capCol = GetComponent<CapsuleCollider2D>();
+            bourbonEffect = GetComponent<BourbonEffectScript>();
+            dashCounter = Mathf.Infinity;
+            controller = gameObject.GetComponent<BourbonController>();
+        }
+        private void Start()
+        {
+            controller.ChangeState(controller.idleState);
+            sktAnim.state.SetAnimation(0, idleAnimationName, true);
+            jumpCounter = 0;
+        }
+        private void Update()
+        {
+            //check buff speed 
+            // Vector2 checkStandingPos = new Vector2(capCol.bounds.center.x, capCol.bounds.min.y - 0.3f);
+            // float buffSpeed =  mapManager.GetTileWalkingSpeed(checkStandingPos);
+            // if (buffSpeed != 0) {
+            //     currentSpeed = initSpeed + buffSpeed;
+            // }
+            // else currentSpeed = initSpeed;
+            currentSpeed = initSpeed;
+           // HandleState();
+            HandleFaceDirection();
+            controller.UpdateSM();
+            dashCounter += Time.deltaTime;
+
+            //CheckInputInRope();
+        }
+         private void OnGUI() {
+            GUI.Label(new Rect(10, 110, 160, 40), $"{controller.currentState}");
+        }
+        void HandleState()
+        {
+            if (controller.IsGround())
+            {
+                controller.isGround = controller.IsGround();
+                rigit.gravityScale = 3f;
+            }
+          //  controller.isHitWall = controller.IsClingingWall();
+        }
+        private void LateUpdate()
+        {
+           
+            //Testing climbing on Rope
+            if (attached) rigit.velocity = Vector2.zero;
+        }
+        public void Falling()
+        {
+           
+            rigit.AddForce(Vector2.down * rigit.mass * gravityFallScale , ForceMode2D.Force);
+        }
+        public void TiepDat()
+        {
+            rigit.gravityScale = 3f;
+            jumpCounter = 0;
+        }
+        //void CheckInputInRope()
+        //{
+        //    if (controller.isStillAttachRope())
+        //    {
+        //        anim.SetBool("isOnRope", true);
+
+        //        if (Input.GetKey(KeyCode.W) && attached)
+        //        {
+        //            Slide(1);
+        //        }
+        //        else if (Input.GetKey(KeyCode.S) && attached)
+        //        {
+        //            Slide(-1);
+        //        }
+        //        else if (Input.GetKeyDown(KeyCode.Space) && attached)
+        //        {
+        //            controller.Detach();
+        //        }
+        //        else anim.SetFloat("isClimbing", 0);
+        //    }
+        //    else controller.Detach();
+        //}
+      
+        void Slide(int direct)
+        {
+
+            anim.SetFloat("isClimbing", 1);
+            Vector2 currPos = transform.position;
+            currPos.y += currentSpeed * Time.deltaTime * direct;
+            transform.position = currPos;
+        }
+        public void MoveInDirection(float dir, float sec)
+        {
+            timeCounter = sec;
+            dirAutoMove = dir;
+        }
+        #region Input Handle and movement
+        // void ProcessInput()
+        // {
+        //     HandleMovementInput();
+        //     if (jumpInput)
+        //         HandleJumpInput();
+        //     HandleDashInput();
+        // }
+        public void HandleMovementInput()
+        {
+          
+            Walk();
+        }
+        public void Walk()
+        {
+            Vector2 curPos = gameObject.transform.position;
+            curPos.x += horizotal * currentSpeed * Time.deltaTime;
+            gameObject.transform.position = curPos;
+            //  rigit.velocity = new Vector2(currentSpeed * horizotal , rigit.velocity.y);
+        }
+        public void HandleJumpInput()
+        {
+            if (jumpCounter < maxConsecutiveJump && controller.condition != CharacterConditions.Dead)
+            {
+                StartCoroutine("Jump", 1.0f);
+                AudioSystemScript.instance.PlaySound(jumpSound, gameObject.transform.position, 0.6f);
+            //old anim code    anim.SetTrigger("norJump");
+                sktAnim.state.AddAnimation(0, jumpAnimationName, false, -0.6f);
+            }
+        }
+        IEnumerator Jump(float powerMul)
+        {
+                jumping = true;
+                float time = 0;
+                rigit.velocity = new Vector2(rigit.velocity.x, 0);
+                rigit.AddForce(transform.up * jumpForce * powerMul, ForceMode2D.Impulse);
+                while (time < jumpDuration)
+                {
+                    time += Time.deltaTime;
+                    yield return null;
+                }
+            // rigit.velocity = Vector2.zero;
+                jumping = false;
+                jumpCounter += 1;
+        }
+        public void HandleDashInput()
+        {
+
             if (dashCounter > dashTimmer)
             {
                 StartDash();
-                dashCounter = 0;
+                    dashCounter = 0;
             }
         }
-        dashCounter += Time.deltaTime;
-
-        CheckInputInRope();
-    }
-    private void FixedUpdate()
-    {
-        
-        if (hor != 0 && _canMove && !isDead && timeCounter == 0 )
+        void StartDash()
         {
-            Walk();
+            if (isDashing) return;
+            else StartCoroutine(Dasing(dashingTime));
         }
-        
-        if (timeCounter > 0)
+        IEnumerator Dasing(float sec)
         {
-            hor = dirAutoMove;
-            Walk();
-            timeCounter -= Time.deltaTime;
-        }
-        
-        if (IsGround())
-        {
-            rigit.gravityScale = 3f;
-            canJump = true;
-        }
-        else
-        {
-            if (!attached)
-                rigit.gravityScale = 4f;
-            canJump = false;
-        }
-
-
-        //Testing climbing on Rope
-        if (attached) rigit.velocity = Vector2.zero;
-    }
-
-    void CheckInputInRope()
-    {
-        if (isStillAttachRope())
-        {
-            anim.SetBool("isOnRope", true);
-
-            if (Input.GetKey(KeyCode.W) && attached)
-            {
-                Slide(1);
-            }
-            else if (Input.GetKey(KeyCode.S) && attached)
-            {
-                Slide(-1);
-            }
-            else if (Input.GetKeyDown(KeyCode.Space) && attached)
-            {
-                Detach();
-            }
-            else anim.SetFloat("isClimbing", 0);
-        }
-        else Detach();
-        
-    }
-    public void Attach(Rigidbody2D ropeBone)
-    {
-        rigit.gravityScale = 0;
-        attached = true;
-        GetComponent<BourbonAttack>().canAttack = false;
-    }
-    public void Detach()
-    {
-        //anim.SetBool("isOnRope", false);
-        //hj.connectedBody.gameObject.GetComponent<RopeSegment>().isPlayerAttached = false;
-        //attached = false;
-        //hj.enabled = false;
-        //hj.connectedBody = null;
-        anim.SetBool("isOnRope", false);
-        rigit.gravityScale = initGravity;
-        attached = false;
-        GetComponent<BourbonAttack>().canAttack = true;
-    }
-    void Slide(int direct)
-    {
-        
-        anim.SetFloat("isClimbing", 1);
-        Vector2 currPos = transform.position;
-        currPos.y += speed * Time.deltaTime * direct;
-        transform.position = currPos;
-    }
-
-    bool isStillAttachRope()
-    {
-        float faceDir = anim.GetFloat("faceRight") >= 0 ? 1 : -1;
-        RaycastHit2D hit = Physics2D.BoxCast(box.bounds.center, box.bounds.size, 0, Vector2.right * faceDir, 0.001f, ropeBoundLayer);
-
-        return hit.collider != null ;
-    }
-    public void MoveInDirection(float dir, float sec)
-    {
-        timeCounter = sec;
-        dirAutoMove = dir;
-    }
-   
-    public void Walk()
-    {
-        oldFace = hor;
-        Vector2 curPos = gameObject.transform.position;
-        curPos.x += hor * speed * Time.deltaTime;
-        gameObject.transform.position = curPos;
-    }
-    void NormalJump()
-    {
-        AudioSystemScript.instance.PlaySound(jumpSound,gameObject.transform.position, 0.6f);
-        canJump = false;
-        anim.SetTrigger("norJump");
-        rigit.AddForce(Vector2.up * JumpForce, ForceMode2D.Impulse);
-    }
-    bool IsGround()
-    {
-        RaycastHit2D hit = Physics2D.BoxCast(box.bounds.center, box.bounds.size, 0, Vector2.down, 0.08f, tilemapLayer);
-       
-        return hit.collider != null;
-    }
-    public void IntoWater()
-    {
-        inWater = true;
-    }
-    public void OutWater()
-    {
-        inWater = false;
-        anim.SetBool("isSwimming", false);
-    }
-   
-    void StartDash()
-    {
-        if (isDashing) return;
-        else StartCoroutine(Dasing(dashingTime));
-    }
-    IEnumerator Dasing(float sec)
-    {
-        isDashing = true;
-        rigit.velocity = Vector2.right * dashingDis * Mathf.Sign(transform.localScale.x) ;
-        StartCoroutine(Fade(fadeTime));
-        anim.SetBool("isDash",true);
-        yield return new WaitForSeconds(sec);
-        StartCoroutine(Appear(fadeTime));
-        bourbonEffect.CastDustOfDash();
-        anim.SetBool("isDash", false);
-        isDashing = false;
-        rigit.velocity = Vector2.zero;
-    }
-    public  IEnumerator Appear(float sec)
-    {
-        Color color = gameObject.GetComponent<SpriteRenderer>().color;
-        while (color.a < 1f)
-        {
-            color.a += 0.05f;
-            gameObject.GetComponent<SpriteRenderer>().color = color;
+            sktAnim.state.AddAnimation(0, dashAnimationName, false, -0.6f);
+            isDashing = true;
+            currentSpeed += dashingDis;
+            rigit.velocity = new Vector2(dashingDis * controller.moveSet.faceDir.x, rigit.velocity.y);
+         //   StartCoroutine(Fade(fadeTime));
+            // anim.SetBool("isDash", true);
             yield return new WaitForSeconds(sec);
-        }
-    }
-    public  IEnumerator Fade(float sec)
-    {
-        Color color = gameObject.GetComponent<SpriteRenderer>().color;
-        while (color.a >= 0.605)
-        {
-            color.a -= 0.05f;
-            gameObject.GetComponent<SpriteRenderer>().color = color;
-            yield return new WaitForSeconds(sec);
-        }
-        color.a = 0f;
-    }
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.layer == 12)
-        {
-            if (!isDead)
-            {
-                AudioSystemScript.instance.PlaySound(hitSound, transform.position, 1);
-                TakeDamage(-10000000);
+           // StartCoroutine(Appear(fadeTime));
+            bourbonEffect.CastDustOfDash();
+            //anim.SetBool("isDash", false);
+            rigit.velocity = new Vector2(0, rigit.velocity.y);
+            sktAnim.state.AddAnimation(0, idleAnimationName, true, 0f);
+            isDashing = false;
+            currentSpeed -= dashingDis;
+            //rigit.velocity = Vector2.zero;
             }
-            
-        }
-        if (!attached)
+        public void HandleFaceDirection()
         {
-            if (collision.gameObject.CompareTag("Rope"))
-            {
-                if (attachedTo != collision.gameObject.transform.parent)
+                if (horizotal != 0)
                 {
-                    if (disregard == null || collision.gameObject.transform.parent.gameObject != disregard)
-                    {
-                        Attach(collision.gameObject.GetComponent<Rigidbody2D>());
-                    }
+                    if (horizotal == 1) faceDir = Vector2.right;
+                    else faceDir = Vector2.left;
                 }
-            }
+                faceDir.y = transform.localScale.y;
+                // faceDir.x = transform.localScale.x * faceDir.x;
+                transform.localScale = faceDir;
+            // }
         }
-        if (collision.gameObject.layer == 6)
-        {
-            if (!AudioSystemScript.instance.IsSoundPlaying())
-                AudioSystemScript.instance.PlaySound(landingSound, transform.position, 0.6f);
-            bourbonEffect.CastGrounding();
-        }
-       
-    }
 
-    void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (!attached)
+        public IEnumerator Appear(float sec)
         {
-            if (collision.gameObject.CompareTag("RopeBound"))
+            Color color = gameObject.GetComponent<SpriteRenderer>().color;
+            while (color.a < 1f)
             {
-                Attach(collision.transform.parent.GetComponent<Rigidbody2D>());
+                color.a += 0.05f;
+                gameObject.GetComponent<SpriteRenderer>().color = color;
+                yield return new WaitForSeconds(sec);
             }
         }
+        public IEnumerator Fade(float sec)
+        {
+            Color color = gameObject.GetComponent<SpriteRenderer>().color;
+            while (color.a >= 0.605)
+            {
+                color.a -= 0.05f;
+                gameObject.GetComponent<SpriteRenderer>().color = color;
+                yield return new WaitForSeconds(sec);
+            }
+            color.a = 0f;
+        }
+        #endregion
+        #region JumpOnWall
+        public void ClingingOnWall()
+        {
+            oldGravity = rigit.gravityScale;
+            rigit.velocity = Vector2.zero;
+            rigit.gravityScale = 0;
+        }
+        //public void Fall()
+        //{
+        //    rigit.gravityScale = 5;
+        //    rigit.AddForce(Vector2.down, ForceMode2D.Impulse);
+        //}
+        public void WallJumpHandle()
+        {
+     
+            StartCoroutine("WallJump", 1);
+        }
+        IEnumerator WallJump(float powerMul)
+        {
+            jumping = true;
+            float time = 0;
+            rigit.velocity = new Vector2(rigit.velocity.x, 0);
+            if (transform.localScale.x > 0)
+                wallJumpDirection = -1;
+            else wallJumpDirection = 1;
+            Vector2 wallJumpVector = new Vector2(wallJumpDirection * wallJumpForce.x * rigit.mass, Mathf.Sqrt(2f * wallJumpForce.y * rigit.mass)); 
+          //  rigit.AddForce(wallJumpVector, ForceMode2D.Impulse);
+            rigit.velocity = wallJumpVector; 
+            while (time < 0.5f)
+            {
+                time += Time.deltaTime;
+                yield return null;
+            }
+            rigit.velocity = new Vector2(0, rigit.velocity.y);
+            jumping = false;
+        }
+        #endregion
+        public bool PlayerWantClingeOnWall() {
+            if (controller.HitWallLeft() && controller.moveSet.horizotal == -1)
+                return true;
+            else if (controller.HitWallRight() && controller.moveSet.horizotal == 1) return true;
+            return false;
+        }
     }
-    
-    
 }

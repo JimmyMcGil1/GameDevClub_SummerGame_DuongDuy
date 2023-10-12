@@ -1,14 +1,30 @@
-using System.Collections;
-using System.Collections.Generic;
+using Spine;
+using Spine.Unity;
 using UnityEngine;
+using Units.Bourbon;
+using Units.Enemy;
 
 public class EnemyGraphixScript : MonoBehaviour
 {
-    [SerializeField] GameObject enemyCtrller;
-    public void Attack()
+     GameObject bourbon;
+     int attackPower;
+    private void Start()
     {
-        enemyCtrller.GetComponent<EnemyUnitBase>().Attack();
+        SkeletonAnimation anim = GetComponent<SkeletonAnimation>();
+        bourbon = GameObject.FindGameObjectWithTag("Bourbon").gameObject;
+        anim.state.Event += OnEvent;
+        attackPower = transform.parent.GetComponent<EnemyUnitBase>().attackPower;
     }
+
+    private void OnEvent(TrackEntry trackEntry, Spine.Event e)
+    {
+        if (e.Data.Name == "hit")
+        {
+            bourbon.GetComponent<BourbonController>().TakeDamage(-attackPower);
+        }
+        
+    }
+    
     public void DestroyEnemy()
     {
         Debug.Log("destroy enemy");

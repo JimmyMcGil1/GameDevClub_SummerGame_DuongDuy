@@ -1,13 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class EnemyTier2Script : EnemyUnitBase
+namespace Units.Enemy
 {
-   
-
-    protected Vector3 BourbonPostion()
+    public class EnemyTier2Script : EnemyUnitBase
     {
-        return bourbon.transform.position;
+        protected Vector3 BourbonPostion()
+        {
+            return bourbon.transform.position;
+        }
     }
 }

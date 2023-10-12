@@ -1,45 +1,46 @@
 using UnityEngine;
 using UnityEngine.UI;
-
-public class GauMatHi : EnemyTier3Script
+namespace Units.Enemy
 {
-    [SerializeField] float checkAttackDis;
-    private void Start()
+    public class GauMatHi : EnemyTier3Script
     {
-        SetStats(initStats);
-        healSld = transform.Find("Enemy_t1_2_Canvas").Find("healSld").gameObject.GetComponent<Slider>();
-        healSld.maxValue = _Stats.Health;
-        healSld.value = _Stats.Health;
-        healSld.gameObject.SetActive(false);
-
-    }
-
-    private void Update()
-    {
-        ChangeDir();
-        Patrolling(timeInOneDirect, 2);
-        if (Mathf.Abs(enemyGraphix.transform.position.x - bourbon.transform.position.x) <= checkAttackDis)
+        [SerializeField] float checkAttackDis;
+        private void Start()
         {
-            if (attackCounter > attackTimmer)
+            healSld = transform.Find("Enemy_t1_2_Canvas").Find("healSld").gameObject.GetComponent<Slider>();
+            healSld.maxValue = _Stats.Health;
+            healSld.value = _Stats.Health;
+            healSld.gameObject.SetActive(false);
+
+        }
+
+        private void Update()
+        {
+            ChangeDir();
+            Patrolling(timeInOneDirect, 2);
+            if (Mathf.Abs(enemyGraphix.transform.position.x - bourbon.transform.position.x) <= checkAttackDis)
             {
-                CheckIfHitCharacter();
-                attackCounter = 0;
+                if (attackCounter > attackTimmer)
+                {
+                    CheckIfHitCharacter();
+                    attackCounter = 0;
+                }
             }
+            attackCounter += Time.deltaTime;
         }
-        attackCounter += Time.deltaTime;
-    }
-    void ChangeDir()
-    {
-        Vector2 loc = enemyGraphix.transform.localScale;
-        if (dirMove.x > 0)
+        void ChangeDir()
         {
-            loc.x = -1;
-            enemyGraphix.transform.localScale = loc;
-        }
-        else
-        {
-            loc.x = 1;
-            enemyGraphix.transform.localScale = loc;
+            Vector2 loc = enemyGraphix.transform.localScale;
+            if (dirMove.x > 0)
+            {
+                loc.x = -1;
+                enemyGraphix.transform.localScale = loc;
+            }
+            else
+            {
+                loc.x = 1;
+                enemyGraphix.transform.localScale = loc;
+            }
         }
     }
 }

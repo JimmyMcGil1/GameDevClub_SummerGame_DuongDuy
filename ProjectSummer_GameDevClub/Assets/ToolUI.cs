@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-
+using System;
 public class ToolUI : MonoBehaviour
 {
     Image panelImage;
@@ -35,7 +35,6 @@ public class ToolUI : MonoBehaviour
     }
     private void Start()
     {
-        Debug.Log(objImg.Count.ToString());
         foreach (var img in objImg)
         {
             img.fillAmount = 0;
@@ -63,6 +62,7 @@ public class ToolUI : MonoBehaviour
     }
     public void ObtionButton()
     {
+        Debug.Log("Obtion button is call");
         if (processingPanel) return;
         if (panelIsOpen)
         {
@@ -107,7 +107,7 @@ public class ToolUI : MonoBehaviour
         while (img.fillAmount < 1)
         {
             img.fillAmount += 0.05f;
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(0.01f);
         }
         Button btn = img.gameObject.GetComponent<Button>();
         if (btn != null)
@@ -120,7 +120,7 @@ public class ToolUI : MonoBehaviour
         while (img.fillAmount > 0)
         {
             img.fillAmount -= 0.05f;
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(0.01f);
         }
 
         img.fillAmount = 0f;
@@ -182,6 +182,7 @@ public class ToolUI : MonoBehaviour
     public void ReloadScene()
     {
         Systems.instance.ReloadCurrentScene();
+        Time.timeScale = 1;
     }
     public void ExitButton()
     {

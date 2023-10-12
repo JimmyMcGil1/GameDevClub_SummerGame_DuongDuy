@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6154899d8dea494db8e1c52f43e0177, type: 3}
+  m_Name: BuffSpeedTileData
+  m_EditorClassIdentifier: 
+  tiles:
+  - {fileID: 11400000, guid: c3f892aa3fe9d124a83a47b7e856ffbd, type: 2}
+  buffSpeed: 3

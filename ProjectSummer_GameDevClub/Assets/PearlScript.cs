@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-
+using Units.Bourbon;
 public class PearlScript : MonoBehaviour
 {
     bool isFire = false;
@@ -36,7 +36,7 @@ public class PearlScript : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bourbon"))
         {
-            collision.gameObject.GetComponent<BourbonMoveset>().TakeDamage(-damage);
+            collision.gameObject.GetComponent<BourbonController>().TakeDamage(-damage);
         }
         GetComponent<Animator>().SetTrigger("hit");
     }

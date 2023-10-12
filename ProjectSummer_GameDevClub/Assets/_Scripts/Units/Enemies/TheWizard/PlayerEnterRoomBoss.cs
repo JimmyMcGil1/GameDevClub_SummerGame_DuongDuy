@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Units.Enemy;
 public class PlayerEnterRoomBoss : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D collision)
